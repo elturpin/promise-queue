@@ -1,0 +1,17 @@
+{
+    "name": "promise-queue",
+    "version": "1.0.0",
+    "description": "A small library with solution for promise queuing",
+    "license": "ISC",
+    "author": "ElTurpin (https://github.com/elturpin)",
+    "type": "module",
+    "scripts": {
+        "test": "vitest run"
+    },
+    "devDependencies": {
+        "@types/node": "^22.13.14",
+        "prettier": "^3.5.3",
+        "typescript": "^5.8.2",
+        "vitest": "^3.1.1"
+    }
+}
