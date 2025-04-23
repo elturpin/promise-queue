@@ -13,11 +13,11 @@ export class DynamicBatchedPromiseQueue implements IPromiseQueue {
         });
     }
 
-    async enqueue<T>(callback: PromiseCreator<T>): Promise<T> {
+    async enqueue<T>(task: PromiseCreator<T>): Promise<T> {
         const afterSelectingWorker = this.operationSerializer.enqueue(
             async () => {
                 const queueIndex = await Promise.race(this.queueRacers);
-                const result = callback();
+                const result = task();
                 this.queueRacers[queueIndex] = result.then(
                     () => queueIndex,
                     () => queueIndex,

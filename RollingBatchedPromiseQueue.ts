@@ -13,8 +13,8 @@ export class RollingBatchedPromiseQueue implements IPromiseQueue {
         );
     }
 
-    async enqueue<T>(callback: PromiseCreator<T>): Promise<T> {
+    async enqueue<T>(task: PromiseCreator<T>): Promise<T> {
         this.queueIndex = (this.queueIndex + 1) % this.batchSize;
-        return this.queues[this.queueIndex].enqueue(callback);
+        return this.queues[this.queueIndex].enqueue(task);
     }
 }
