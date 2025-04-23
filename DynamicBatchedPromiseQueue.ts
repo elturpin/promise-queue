@@ -18,7 +18,10 @@ export class DynamicBatchedPromiseQueue implements IPromiseQueue {
             async () => {
                 const queueIndex = await Promise.race(this.queueRacers);
                 const result = task();
-                this.queueRacers[queueIndex] = result.then(() => queueIndex);
+                this.queueRacers[queueIndex] = result.then(
+                    () => queueIndex,
+                    () => queueIndex,
+                );
                 return () => result;
             },
         );

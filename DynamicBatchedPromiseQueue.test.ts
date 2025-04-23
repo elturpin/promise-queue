@@ -18,7 +18,22 @@ describe('DynamiqueBatchedPromiseQueue', () => {
         expect(task2).toHaveBeenCalled();
     });
 
-    it('should not execute nest tasks if first batch has not resolved', async () => {
+    it('should execute a second task even if a first has reject', async () => {
+        const queue = new DynamicBatchedPromiseQueue(2);
+        const { task: task1, reject } = createTestTask();
+        const { task: task2 } = createTestTask();
+        queue.enqueue(task1).catch(() => {});
+
+        reject();
+        await setTimeout(WAIT_TIME);
+
+        queue.enqueue(task2);
+        await setTimeout(WAIT_TIME);
+
+        expect(task2).toHaveBeenCalled();
+    });
+
+    it('should not execute next tasks if first batch has not resolved', async () => {
         const queue = new DynamicBatchedPromiseQueue(2);
         const { task: task1 } = createTestTask();
         const { task: task2 } = createTestTask();
@@ -35,7 +50,7 @@ describe('DynamiqueBatchedPromiseQueue', () => {
         expect(task4).not.toHaveBeenCalled();
     });
 
-    it('should execute the next task as soon as the second task has resolved', async () => {
+    it('should execute the next task as soon as the any initial task has resolved', async () => {
         const queue = new DynamicBatchedPromiseQueue(2);
         const { task: task1 } = createTestTask();
         const { task: task2, resolve: resolve2 } = createTestTask();
