@@ -1,9 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { setTimeout } from 'timers/promises';
-import { createTestTask } from './createTestTask.js';
-import { DynamicBatchedPromiseQueue } from './DynamicBatchedPromiseQueue.js';
-
-const WAIT_TIME = 10;
+import { createTestTask } from './createTestTask.ts';
+import { WAIT_TIME } from './test-constants.ts';
+import { DynamicBatchedPromiseQueue } from './DynamicBatchedPromiseQueue.ts';
 
 describe('DynamiqueBatchedPromiseQueue', () => {
     it('should execute all tasks if number is under batch size', async () => {

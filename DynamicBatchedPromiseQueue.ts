@@ -2,7 +2,7 @@ import {
     type IPromiseQueue,
     PromiseQueue,
     type PromiseCreator,
-} from './PromiseQueue.js';
+} from './PromiseQueue.ts';
 
 export class DynamicBatchedPromiseQueue implements IPromiseQueue {
     private queueRacers: (number | Promise<number>)[] = [];

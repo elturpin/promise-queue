@@ -1,9 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { setTimeout } from 'timers/promises';
-import { createTestTask } from './createTestTask.js';
-import { RollingBatchedPromiseQueue } from './RollingBatchedPromiseQueue.js';
-
-const WAIT_TIME = 10;
+import { createTestTask } from './createTestTask.ts';
+import { WAIT_TIME } from './test-constants.ts';
+import { RollingBatchedPromiseQueue } from './RollingBatchedPromiseQueue.ts';
 
 describe('RollingBatchedPromiseQueue', () => {
     it('should eventually execute all tasks if number is under batch size', async () => {

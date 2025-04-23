@@ -1,9 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { setTimeout } from 'timers/promises';
-import { createTestTask } from './createTestTask.js';
-import { PromiseQueue } from './PromiseQueue.js';
-
-const WAIT_TIME = 10;
+import { createTestTask } from './createTestTask.ts';
+import { WAIT_TIME } from './test-constants.ts';
+import { PromiseQueue } from './PromiseQueue.ts';
 
 describe('PromiseQueue', () => {
     describe('with 1 promise', () => {
