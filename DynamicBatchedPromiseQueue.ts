@@ -4,7 +4,7 @@ import {
     type PromiseCreator,
 } from './PromiseQueue.js';
 
-export class DynamiqueBatchedPromiseQueue implements IPromiseQueue {
+export class DynamicBatchedPromiseQueue implements IPromiseQueue {
     private queueRacers: (number | Promise<number>)[] = [];
     private operationSerializer = new PromiseQueue();
     constructor(batchSize: number) {
