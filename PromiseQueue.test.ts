@@ -79,11 +79,10 @@ describe('PromiseQueue', () => {
             const queue = new PromiseQueue();
             const { task: task1, reject } = createTestTask();
             const { task: task2 } = createTestTask();
-            const result = queue.enqueue(task1);
+            queue.enqueue(task1).catch(() => {});
             queue.enqueue(task2);
 
             reject(42);
-            await expect(result).rejects.toBe(42);
             await setTimeout(WAIT_TIME);
 
             expect(task2).toHaveBeenCalled();

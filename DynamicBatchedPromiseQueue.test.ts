@@ -22,8 +22,7 @@ describe('DynamiqueBatchedPromiseQueue', () => {
         const queue = new DynamicBatchedPromiseQueue(2);
         const { task: task1, reject } = createTestTask();
         const { task: task2 } = createTestTask();
-        const result = queue.enqueue(task1);
-        result.catch(() => {});
+        queue.enqueue(task1).catch(() => {});
 
         reject();
         await setTimeout(WAIT_TIME);
