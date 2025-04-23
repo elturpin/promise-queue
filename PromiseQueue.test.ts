@@ -36,6 +36,17 @@ describe('PromiseQueue', () => {
 
             await expect(result).resolves.toBe(42);
         });
+
+        it('should reject the returned promise if the task is rejected', async () => {
+            const queue = new PromiseQueue();
+            const { task, reject } = createTestTask();
+
+            const result = queue.enqueue(task);
+
+            reject(42);
+
+            await expect(result).rejects.toBe(42);
+        });
     });
 
     describe('with 2 promises', () => {
@@ -59,6 +70,19 @@ describe('PromiseQueue', () => {
             queue.enqueue(task2);
 
             resolve(42);
+            await setTimeout(WAIT_TIME);
+
+            expect(task2).toHaveBeenCalled();
+        });
+
+        it('should execute the second task, if the first is rejected', async () => {
+            const queue = new PromiseQueue();
+            const { task: task1, reject } = createTestTask();
+            const { task: task2 } = createTestTask();
+            queue.enqueue(task1).catch(() => {});
+            queue.enqueue(task2);
+
+            reject(42);
             await setTimeout(WAIT_TIME);
 
             expect(task2).toHaveBeenCalled();
