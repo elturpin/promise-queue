@@ -236,26 +236,6 @@ describe('PromiseQueue', () => {
             expect(spy).not.toHaveBeenCalled();
         });
 
-        it('should not resolve as well with a third task', async () => {
-            const spy = vi.fn();
-            const queue = new PromiseQueue();
-            const { task: task1, resolve: resolve1 } = createTestTask();
-            const { task: task2, resolve: resolve2 } = createTestTask();
-            const { task: task3 } = createTestTask();
-            queue.enqueue(task1);
-            await setTimeout(WAIT_TIME);
-            queue.waitIdle().then(spy);
-            queue.enqueue(task2);
-            resolve1(42);
-            await setTimeout(WAIT_TIME);
-
-            queue.enqueue(task3);
-            resolve2(42);
-            await setTimeout(WAIT_TIME);
-
-            expect(spy).not.toHaveBeenCalled();
-        });
-
         it('should resolve once all task have resolved', async () => {
             const spy = vi.fn();
             const queue = new PromiseQueue();

@@ -8,6 +8,10 @@ export class PrioritizedPromiseQueue implements IPrioritizedPromiseQueue {
     private queue = new PromiseQueue();
     private prioritizedQueue = new PromiseQueue();
 
+    constructor() {
+        this.prioritizedQueue.enqueue(() => Promise.resolve());
+    }
+
     async enqueue<T>(
         task: PromiseCreator<T>,
         prioritize?: boolean,
@@ -16,7 +20,6 @@ export class PrioritizedPromiseQueue implements IPrioritizedPromiseQueue {
             return this.prioritizedQueue.enqueue(task);
         }
 
-        await Promise.resolve();
         await this.prioritizedQueue.waitIdle();
         return this.queue.enqueue(task);
     }
