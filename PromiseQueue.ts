@@ -22,9 +22,13 @@ export class PromiseQueue implements IPromiseQueue {
     }
 
     async waitIdle() {
-        if (this.pendingTask > 0) {
+        if (!this.isIdle) {
             await this.actualPromise.then(() => this.waitIdle());
         }
         return Promise.resolve();
+    }
+
+    get isIdle() {
+        return this.pendingTask === 0;
     }
 }

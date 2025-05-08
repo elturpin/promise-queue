@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { setTimeout } from 'timers/promises';
 import { createTestTask } from './createTestTask';
 import { WAIT_TIME } from './test-constants';
@@ -78,5 +78,129 @@ describe('PrioritizedPromiseQueue', () => {
         await setTimeout(WAIT_TIME);
         expect(task3).toHaveBeenCalled();
         expect(task1).not.toHaveBeenCalled();
+    });
+
+    describe('waitIdle', () => {
+        it('should resolve if nothing is unqueued', async () => {
+            const queue = new PrioritizedPromiseQueue();
+
+            await expect(queue.waitIdle()).resolves.toBeUndefined();
+        });
+
+        it('should not resolve if a task has not resolved', async () => {
+            const spy = vi.fn();
+            const queue = new PrioritizedPromiseQueue();
+            const { task: task1 } = createTestTask();
+            queue.enqueue(task1);
+
+            queue.waitIdle().then(spy);
+
+            await setTimeout(WAIT_TIME);
+
+            expect(spy).not.toHaveBeenCalled();
+        });
+
+        it('should not resolve if a prior task has not resolved', async () => {
+            const spy = vi.fn();
+            const queue = new PrioritizedPromiseQueue();
+            const { task: task1 } = createTestTask();
+            queue.enqueue(task1, true);
+
+            queue.waitIdle().then(spy);
+
+            await setTimeout(WAIT_TIME);
+
+            expect(spy).not.toHaveBeenCalled();
+        });
+
+        it('should resolve if a task has resolved', async () => {
+            const spy = vi.fn();
+            const queue = new PrioritizedPromiseQueue();
+            const { task: task1, resolve } = createTestTask();
+            queue.enqueue(task1);
+
+            queue.waitIdle().then(spy);
+            resolve(42);
+            await setTimeout(WAIT_TIME);
+
+            expect(spy).toHaveBeenCalled();
+        });
+
+        it('should not resolve if a later enqueued task has not resolved', async () => {
+            const spy = vi.fn();
+            const queue = new PrioritizedPromiseQueue();
+            const { task: task1, resolve } = createTestTask();
+            const { task: task2 } = createTestTask();
+            queue.enqueue(task1);
+            await setTimeout(WAIT_TIME);
+
+            queue.waitIdle().then(spy);
+            queue.enqueue(task2);
+            resolve(42);
+            await setTimeout(WAIT_TIME);
+
+            expect(spy).not.toHaveBeenCalled();
+        });
+
+        it('should not resolve as well with a third task', async () => {
+            const spy = vi.fn();
+            const queue = new PrioritizedPromiseQueue();
+            const { task: task1, resolve: resolve1 } = createTestTask();
+            const { task: task2, resolve: resolve2 } = createTestTask();
+            const { task: task3 } = createTestTask();
+            queue.enqueue(task1);
+            await setTimeout(WAIT_TIME);
+            queue.waitIdle().then(spy);
+            queue.enqueue(task2);
+            resolve1(42);
+            await setTimeout(WAIT_TIME);
+
+            queue.enqueue(task3);
+            resolve2(42);
+            await setTimeout(WAIT_TIME);
+
+            expect(spy).not.toHaveBeenCalled();
+        });
+
+        it('should not resolve if prior task is added and then a normal', async () => {
+            const spy = vi.fn();
+            const queue = new PrioritizedPromiseQueue();
+            const { task: task1, resolve: resolve1 } = createTestTask();
+            const { task: task2, resolve: resolve2 } = createTestTask();
+            const { task: task3 } = createTestTask();
+            queue.enqueue(task1);
+            await setTimeout(WAIT_TIME);
+            queue.waitIdle().then(spy);
+            queue.enqueue(task2, true);
+            resolve1(42);
+            await setTimeout(WAIT_TIME);
+            queue.enqueue(task3);
+            resolve2(2);
+            await setTimeout(WAIT_TIME);
+
+            expect(spy).not.toHaveBeenCalled();
+        });
+
+        it('should resolve once all task have resolved', async () => {
+            const spy = vi.fn();
+            const queue = new PrioritizedPromiseQueue();
+            const { task: task1, resolve: resolve1 } = createTestTask();
+            const { task: task2, resolve: resolve2 } = createTestTask();
+            const { task: task3, resolve: resolve3 } = createTestTask();
+            queue.enqueue(task1);
+            await setTimeout(WAIT_TIME);
+            queue.waitIdle().then(spy);
+            queue.enqueue(task2);
+            resolve1(42);
+            await setTimeout(WAIT_TIME);
+
+            queue.enqueue(task3);
+            resolve2(42);
+            await setTimeout(WAIT_TIME);
+            resolve3(42);
+            await setTimeout(WAIT_TIME);
+
+            expect(spy).toHaveBeenCalled();
+        });
     });
 });

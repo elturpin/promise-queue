@@ -23,4 +23,18 @@ export class PrioritizedPromiseQueue implements IPrioritizedPromiseQueue {
         await this.prioritizedQueue.waitIdle();
         return this.queue.enqueue(task);
     }
+
+    async waitIdle() {
+        if (!this.isIdle) {
+            await Promise.all([
+                this.prioritizedQueue.waitIdle(),
+                this.queue.waitIdle(),
+            ]).then(() => this.waitIdle());
+        }
+        return Promise.resolve();
+    }
+
+    get isIdle() {
+        return this.prioritizedQueue.isIdle && this.queue.isIdle;
+    }
 }
