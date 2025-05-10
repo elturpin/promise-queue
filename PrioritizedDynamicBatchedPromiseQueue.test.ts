@@ -3,6 +3,7 @@ import { setTimeout } from 'timers/promises';
 import { createTestTask } from './createTestTask';
 import { WAIT_TIME } from './test-constants';
 import { PrioritizedDynamicBatchedPromiseQueue } from './PrioritizedDynamicBatchedPromiseQueue';
+import { range } from './range';
 
 describe('PrioritizedDynamicBatchedPromiseQueue', () => {
     it('should execute all tasks if number is under batch size', async () => {
@@ -203,6 +204,43 @@ describe('PrioritizedDynamicBatchedPromiseQueue', () => {
             await setTimeout(WAIT_TIME);
 
             expect(spy).not.toHaveBeenCalled();
+        });
+    });
+
+    describe('scaling', () => {
+        it('should handle many tasks', async () => {
+            const queue = new PrioritizedDynamicBatchedPromiseQueue(20);
+            const { task: task1, resolve: resolve1 } = createTestTask();
+            const { task: task2, resolve: resolve2 } = createTestTask();
+            const { task: task3 } = createTestTask();
+
+            range(30).forEach(() => {
+                queue.enqueue(task1);
+            });
+            range(10).forEach(() => {
+                queue.enqueue(task2);
+            });
+            range(20).forEach(() => {
+                queue.enqueue(task3);
+            });
+
+            await setTimeout(WAIT_TIME);
+
+            expect(task1).toHaveBeenCalledTimes(20);
+            expect(task2).not.toHaveBeenCalled();
+            expect(task3).not.toHaveBeenCalled();
+
+            resolve1(1);
+            await setTimeout(WAIT_TIME);
+
+            expect(task1).toHaveBeenCalledTimes(30);
+            expect(task2).toHaveBeenCalledTimes(10);
+            expect(task3).toHaveBeenCalledTimes(10);
+
+            resolve2(2);
+            await setTimeout(WAIT_TIME);
+
+            expect(task3).toHaveBeenCalledTimes(20);
         });
     });
 });
