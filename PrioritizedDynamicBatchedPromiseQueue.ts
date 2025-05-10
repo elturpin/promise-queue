@@ -1,10 +1,22 @@
-import { beginTaskOnPool } from './DynamicBatchedPromiseQueue';
 import {
     PrioritizedPromiseQueue,
     type IPrioritizedPromiseQueue,
 } from './PrioritizedPromiseQueue';
 import { type PromiseCreator } from './PromiseQueue';
 import { range } from './range';
+
+async function beginTaskOnPool<T>(
+    task: PromiseCreator<T>,
+    poolIndexer: (number | Promise<number>)[],
+) {
+    const poolIndex = await Promise.race(poolIndexer);
+    const result = task();
+    poolIndexer[poolIndex] = result.then(
+        () => poolIndex,
+        () => poolIndex,
+    );
+    return () => result;
+}
 
 export class PrioritizedDynamicBatchedPromiseQueue
     implements IPrioritizedPromiseQueue

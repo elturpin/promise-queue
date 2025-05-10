@@ -1,35 +1,19 @@
-import {
-    type IPromiseQueue,
-    PromiseQueue,
-    type PromiseCreator,
-} from './PromiseQueue';
-import { range } from './range';
-
-export async function beginTaskOnPool<T>(
-    task: PromiseCreator<T>,
-    poolIndexer: (number | Promise<number>)[],
-) {
-    const poolIndex = await Promise.race(poolIndexer);
-    const result = task();
-    poolIndexer[poolIndex] = result.then(
-        () => poolIndex,
-        () => poolIndex,
-    );
-    return () => result;
-}
+import { PrioritizedDynamicBatchedPromiseQueue } from './PrioritizedDynamicBatchedPromiseQueue';
+import { type IPromiseQueue, type PromiseCreator } from './PromiseQueue';
 
 export class DynamicBatchedPromiseQueue implements IPromiseQueue {
-    private poolIndexer: (number | Promise<number>)[];
-    private operationSerializer = new PromiseQueue();
+    private batchedQueue: PrioritizedDynamicBatchedPromiseQueue;
     constructor(batchSize: number) {
-        this.poolIndexer = range(batchSize);
+        this.batchedQueue = new PrioritizedDynamicBatchedPromiseQueue(
+            batchSize,
+        );
     }
 
     enqueue<T>(task: PromiseCreator<T>): Promise<T> {
-        const afterTaskExecution = this.operationSerializer.enqueue(() =>
-            beginTaskOnPool(task, this.poolIndexer),
-        );
+        return this.batchedQueue.enqueue(task);
+    }
 
-        return afterTaskExecution.then((promiseReturner) => promiseReturner());
+    waitIdle() {
+        return this.batchedQueue.waitIdle();
     }
 }
