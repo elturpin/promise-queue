@@ -4,7 +4,7 @@ import { createTestTask } from './createTestTask.ts';
 import { WAIT_TIME } from './test-constants.ts';
 import { DynamicBatchedPromiseQueue } from './DynamicBatchedPromiseQueue.ts';
 
-describe('DynamiqueBatchedPromiseQueue', () => {
+describe('DynamicBatchedPromiseQueue', () => {
     it('should execute all tasks if number is under batch size', async () => {
         const queue = new DynamicBatchedPromiseQueue(2);
         const { task: task1 } = createTestTask();
