@@ -34,7 +34,7 @@ export class PrioritizedPromiseQueue implements IPrioritizedPromiseQueue {
         return Promise.resolve();
     }
 
-    get isIdle() {
+    private get isIdle() {
         return this.prioritizedQueue.isIdle && this.queue.isIdle;
     }
 }

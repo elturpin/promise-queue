@@ -5,7 +5,7 @@ export interface IPromiseQueue {
 export type PromiseCreator<T> = () => Promise<T>;
 
 export class PromiseQueue implements IPromiseQueue {
-    private actualPromise: Promise<void> = Promise.resolve();
+    private actualPromise = Promise.resolve();
     private pendingTask = 0;
     async enqueue<T>(task: PromiseCreator<T>): Promise<T> {
         const newPromise = this.actualPromise.then(() => task());
@@ -23,9 +23,9 @@ export class PromiseQueue implements IPromiseQueue {
 
     async waitIdle() {
         if (!this.isIdle) {
-            await this.actualPromise.then(() => this.waitIdle());
+            await this.actualPromise;
+            await this.waitIdle();
         }
-        return Promise.resolve();
     }
 
     get isIdle() {
