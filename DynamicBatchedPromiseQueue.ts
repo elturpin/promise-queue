@@ -3,32 +3,31 @@ import {
     PromiseQueue,
     type PromiseCreator,
 } from './PromiseQueue';
+import { range } from './range';
 
-export async function executeTaskOnWorker<T>(
+export async function beginTaskOnPool<T>(
     task: PromiseCreator<T>,
-    workerIndexer: (number | Promise<number>)[],
+    poolIndexer: (number | Promise<number>)[],
 ) {
-    const queueIndex = await Promise.race(workerIndexer);
+    const poolIndex = await Promise.race(poolIndexer);
     const result = task();
-    workerIndexer[queueIndex] = result.then(
-        () => queueIndex,
-        () => queueIndex,
+    poolIndexer[poolIndex] = result.then(
+        () => poolIndex,
+        () => poolIndex,
     );
     return () => result;
 }
 
 export class DynamicBatchedPromiseQueue implements IPromiseQueue {
-    private workersIndexer: (number | Promise<number>)[] = [];
+    private poolIndexer: (number | Promise<number>)[];
     private operationSerializer = new PromiseQueue();
     constructor(batchSize: number) {
-        Array.from({ length: batchSize }).forEach((_, index) => {
-            this.workersIndexer.push(index);
-        });
+        this.poolIndexer = range(batchSize);
     }
 
-    async enqueue<T>(task: PromiseCreator<T>): Promise<T> {
+    enqueue<T>(task: PromiseCreator<T>): Promise<T> {
         const afterTaskExecution = this.operationSerializer.enqueue(() =>
-            executeTaskOnWorker(task, this.workersIndexer),
+            beginTaskOnPool(task, this.poolIndexer),
         );
 
         return afterTaskExecution.then((promiseReturner) => promiseReturner());

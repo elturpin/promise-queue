@@ -1,30 +1,50 @@
-import { executeTaskOnWorker } from './DynamicBatchedPromiseQueue';
+import { beginTaskOnPool } from './DynamicBatchedPromiseQueue';
 import {
     PrioritizedPromiseQueue,
     type IPrioritizedPromiseQueue,
 } from './PrioritizedPromiseQueue';
 import { type PromiseCreator } from './PromiseQueue';
+import { range } from './range';
 
 export class PrioritizedDynamicBatchedPromiseQueue
     implements IPrioritizedPromiseQueue
 {
-    private workersIndexer: (number | Promise<number>)[] = [];
+    private poolIndexer: (number | Promise<number>)[];
     private operationSerializer = new PrioritizedPromiseQueue();
+    private lastResultPromise = Promise.resolve();
+    private executingTasks = 0;
     constructor(batchSize: number) {
-        Array.from({ length: batchSize }).forEach((_, index) => {
-            this.workersIndexer.push(index);
-        });
+        this.poolIndexer = range(batchSize);
     }
 
-    async enqueue<T>(
-        task: PromiseCreator<T>,
-        prioritize?: boolean,
-    ): Promise<T> {
-        const afterTaskExecution = this.operationSerializer.enqueue(
-            () => executeTaskOnWorker(task, this.workersIndexer),
+    enqueue<T>(task: PromiseCreator<T>, prioritize?: boolean): Promise<T> {
+        const afterTaskBegun = this.operationSerializer.enqueue(
+            () => beginTaskOnPool(task, this.poolIndexer),
             prioritize,
         );
+        const resultPromise = afterTaskBegun.then((promiseReturner) =>
+            promiseReturner(),
+        );
+        this.lastResultPromise = resultPromise
+            .then(
+                () => {},
+                () => {},
+            )
+            .finally(() => {
+                this.executingTasks--;
+            });
+        this.executingTasks++;
+        return resultPromise;
+    }
 
-        return afterTaskExecution.then((promiseReturner) => promiseReturner());
+    async waitIdle() {
+        if (!this.isIdle) {
+            await this.lastResultPromise;
+            await this.waitIdle();
+        }
+    }
+
+    private get isIdle() {
+        return this.executingTasks === 0;
     }
 }

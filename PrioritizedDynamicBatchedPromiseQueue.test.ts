@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { setTimeout } from 'timers/promises';
 import { createTestTask } from './createTestTask';
 import { WAIT_TIME } from './test-constants';
@@ -125,6 +125,84 @@ describe('PrioritizedDynamicBatchedPromiseQueue', () => {
             await setTimeout(WAIT_TIME);
             expect(task3).toHaveBeenCalledTimes(2);
             expect(task1).not.toHaveBeenCalled();
+        });
+    });
+
+    describe('waitIdle', () => {
+        it('should resolve if nothing is unqueued', async () => {
+            const queue = new PrioritizedDynamicBatchedPromiseQueue(2);
+
+            await expect(queue.waitIdle()).resolves.toBeUndefined();
+        });
+
+        it('should not resolve if a task has not resolved', async () => {
+            const spy = vi.fn();
+            const queue = new PrioritizedDynamicBatchedPromiseQueue(2);
+            const { task } = createTestTask();
+            queue.enqueue(task);
+
+            queue.waitIdle().then(spy);
+            await setTimeout(WAIT_TIME);
+
+            expect(spy).not.toHaveBeenCalled();
+        });
+
+        it('should not resolve if the batch has not resolved', async () => {
+            const spy = vi.fn();
+            const queue = new PrioritizedDynamicBatchedPromiseQueue(2);
+            const { task } = createTestTask();
+            queue.enqueue(task);
+            queue.enqueue(task);
+
+            queue.waitIdle().then(spy);
+
+            await setTimeout(WAIT_TIME);
+
+            expect(spy).not.toHaveBeenCalled();
+        });
+
+        it('should resolve if a task has resolved', async () => {
+            const spy = vi.fn();
+            const queue = new PrioritizedDynamicBatchedPromiseQueue(2);
+            const { task, resolve } = createTestTask();
+            queue.enqueue(task);
+
+            queue.waitIdle().then(spy);
+            resolve(42);
+            await setTimeout(WAIT_TIME);
+
+            expect(spy).toHaveBeenCalled();
+        });
+
+        it('should not resolve if not all batch has not resolved', async () => {
+            const spy = vi.fn();
+            const queue = new PrioritizedDynamicBatchedPromiseQueue(2);
+            const { task: task1, resolve: resolve1 } = createTestTask();
+            const { task: task2 } = createTestTask();
+            queue.enqueue(task1);
+            queue.enqueue(task2);
+            queue.waitIdle().then(spy);
+
+            resolve1(42);
+            await setTimeout(WAIT_TIME);
+
+            expect(spy).not.toHaveBeenCalled();
+        });
+
+        it('should not resolve if a task is added before first is resolved', async () => {
+            const spy = vi.fn();
+            const queue = new PrioritizedDynamicBatchedPromiseQueue(2);
+            const { task: task1, resolve: resolve1 } = createTestTask();
+            const { task: task2 } = createTestTask();
+            queue.enqueue(task1);
+            queue.waitIdle().then(spy);
+            await setTimeout(WAIT_TIME);
+
+            queue.enqueue(task2);
+            resolve1(42);
+            await setTimeout(WAIT_TIME);
+
+            expect(spy).not.toHaveBeenCalled();
         });
     });
 });
